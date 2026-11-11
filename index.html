@@ -1,1 +1,341 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MathZone</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
+
+*{box-sizing:border-box}
+
+body{
+margin:0;
+min-height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+background:#0b1020;
+font-family:Poppins,sans-serif;
+color:white;
+padding:20px;
+}
+
+.game{
+width:100%;
+max-width:430px;
+background:#151d33;
+border:1px solid #293653;
+border-radius:28px;
+padding:25px;
+box-shadow:0 20px 70px #0008;
+}
+
+.top{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:35px;
+}
+
+.logo{font-size:21px;font-weight:800}
+.logo span{color:#9385ff}
+
+.badge{
+background:#29254d;
+color:#a99eff;
+padding:7px 12px;
+border-radius:20px;
+font-size:10px;
+}
+
+.screen{text-align:center}
+.hidden{display:none}
+
+.emoji{font-size:65px}
+
+h1{font-size:37px;line-height:1.2}
+h1 span{color:#9385ff}
+
+p{color:#a5afc7;font-size:13px;line-height:1.7}
+
+button{
+width:100%;
+border:0;
+padding:17px;
+border-radius:14px;
+background:linear-gradient(100deg,#7865ff,#a17aff);
+color:white;
+font-weight:800;
+font-size:15px;
+cursor:pointer;
+margin-top:15px;
+}
+
+button:disabled{opacity:.8;cursor:default}
+
+.stats{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:10px;
+margin-bottom:20px;
+}
+
+.stat{
+background:#202a43;
+padding:12px 5px;
+border-radius:13px;
+}
+
+.stat small{
+display:block;
+color:#8995b0;
+font-size:9px;
+}
+
+.stat strong{
+display:block;
+font-size:22px;
+margin-top:5px;
+}
+
+.progress{
+height:7px;
+background:#293653;
+border-radius:20px;
+overflow:hidden;
+}
+
+#progressBar{
+height:100%;
+width:100%;
+background:#9685ff;
+transition:width 1s linear;
+}
+
+.question-label{
+margin-top:30px;
+letter-spacing:2px;
+font-size:10px;
+}
+
+h2{font-size:42px;margin:15px 0 25px}
+
+.answers{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
+}
+
+.answer{
+background:#222d48;
+border:1px solid #354361;
+padding:20px;
+margin:0;
+font-size:20px;
+border-radius:14px;
+}
+
+.answer.correct{background:#176b51}
+.answer.wrong{background:#8d3044}
+
+#feedback{min-height:25px;margin-top:15px}
+
+.final-score{
+font-size:65px;
+font-weight:800;
+color:#a18fff;
+}
+
+footer{
+text-align:center;
+margin-top:30px;
+font-size:9px;
+color:#68738e;
+letter-spacing:2px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="game">
+
+<div class="top">
+<div class="logo">MATH<span>ZONE</span></div>
+<div class="badge">CHALLENGE</div>
+</div>
+
+<div id="startScreen" class="screen">
+<div class="emoji">🧠</div>
+<h1>Ready to<br><span>Challenge?</span></h1>
+<p>Test your brain, solve equations and beat your high score!</p>
+<button onclick="startGame()">START GAME →</button>
+</div>
+
+<div id="gameScreen" class="screen hidden">
+
+<div class="stats">
+<div class="stat">
+<small>SCORE</small>
+<strong id="score">0</strong>
+</div>
+<div class="stat">
+<small>TIME</small>
+<strong id="timer">30</strong>
+</div>
+<div class="stat">
+<small>QUESTION</small>
+<strong id="number">1</strong>
+</div>
+</div>
+
+<div class="progress">
+<div id="progressBar"></div>
+</div>
+
+<p class="question-label">SOLVE THIS QUESTION</p>
+<h2 id="question">5 + 5 = ?</h2>
+
+<div id="answers" class="answers"></div>
+<p id="feedback"></p>
+</div>
+
+<div id="endScreen" class="screen hidden">
+<div class="emoji">🏆</div>
+<h1>Game <span>Over!</span></h1>
+<p>Your final score:</p>
+<div id="finalScore" class="final-score">0</div>
+<p id="message"></p>
+<button onclick="startGame()">PLAY AGAIN ↻</button>
+</div>
+
+<footer>© 2026 MATHZONE · THINK FAST!</footer>
+</div>
+
+<script>
+let score=0;
+let time=30;
+let questionNumber=0;
+let correctAnswer=0;
+let timerInterval;
+let locked=false;
+
+const $=id=>document.getElementById(id);
+
+function showScreen(id){
+['startScreen','gameScreen','endScreen'].forEach(s=>{
+$(s).classList.add('hidden');
+});
+$(id).classList.remove('hidden');
+}
+
+function startGame(){
+clearInterval(timerInterval);
+score=0;
+time=30;
+questionNumber=0;
+
+$('score').textContent=0;
+$('timer').textContent=30;
+$('progressBar').style.width='100%';
+
+showScreen('gameScreen');
+newQuestion();
+
+timerInterval=setInterval(()=>{
+time--;
+$('timer').textContent=time;
+$('progressBar').style.width=(time/30*100)+'%';
+
+if(time<=0)endGame();
+},1000);
+}
+
+function newQuestion(){
+locked=false;
+questionNumber++;
+
+let a=Math.floor(Math.random()*20)+1;
+let b=Math.floor(Math.random()*20)+1;
+
+let operations=['+','-','×'];
+let op=operations[Math.floor(Math.random()*3)];
+
+if(op==='+')correctAnswer=a+b;
+if(op==='-')correctAnswer=a-b;
+if(op==='×')correctAnswer=a*b;
+
+$('question').textContent=`${a} ${op} ${b} = ?`;
+$('number').textContent=questionNumber;
+$('feedback').textContent='';
+
+let options=[correctAnswer];
+
+while(options.length<4){
+let wrong=correctAnswer+Math.floor(Math.random()*21)-10;
+if(!options.includes(wrong))options.push(wrong);
+}
+
+options.sort(()=>Math.random()-0.5);
+$('answers').innerHTML='';
+
+options.forEach(value=>{
+let btn=document.createElement('button');
+btn.className='answer';
+btn.textContent=value;
+btn.onclick=()=>checkAnswer(value,btn);
+$('answers').appendChild(btn);
+});
+}
+
+function checkAnswer(value,button){
+if(locked||time<=0)return;
+locked=true;
+
+let buttons=document.querySelectorAll('.answer');
+
+buttons.forEach(btn=>{
+btn.disabled=true;
+if(Number(btn.textContent)===correctAnswer){
+btn.classList.add('correct');
+}
+});
+
+if(value===correctAnswer){
+score+=10;
+$('feedback').textContent='✓ Correct! +10 points';
+$('feedback').style.color='#56e0a6';
+}else{
+button.classList.add('wrong');
+$('feedback').textContent='✗ Not quite! Try the next one.';
+$('feedback').style.color='#ff7188';
+}
+
+$('score').textContent=score;
+
+setTimeout(()=>{
+if(time>0)newQuestion();
+},700);
+}
+
+function endGame(){
+clearInterval(timerInterval);
+showScreen('endScreen');
+$('finalScore').textContent=score;
+
+if(score>=100){
+$('message').textContent='Amazing! You are a math master! 🌟';
+}else if(score>=50){
+$('message').textContent='Great job! Keep practicing! 🎉';
+}else{
+$('message').textContent='Good try! You can do even better! 💜';
+}
+}
+</script>
+
+</body>
+</html>
+
